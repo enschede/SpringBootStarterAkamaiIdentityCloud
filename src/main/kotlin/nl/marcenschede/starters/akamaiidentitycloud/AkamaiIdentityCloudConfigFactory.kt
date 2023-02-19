@@ -11,12 +11,14 @@ class AkamaiIdentityCloudConfigFactory(
     val baseUrl: String?,
     val clientId: String?,
     val clientSecret: String?,
+    val timezone: String?,
 ) {
 
     val build: AkamaiIdentityCloudConfig
         get() {
             val objectMapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS)
-            val clock = Clock.system(ZoneId.of("Europe/Amsterdam"))
+            val zoneId: String = if (hasText(timezone)) timezone!! else "UTC"
+            val clock = Clock.system(ZoneId.of(zoneId))
 
             return AkamaiIdentityCloudConfig(
                 url = if (hasText(baseUrl)) URL(baseUrl!!) else throw IllegalArgumentException("akamai.identitycloud.accounts.baseurl property missing"),

@@ -11,21 +11,18 @@ import org.springframework.context.annotation.Configuration
 class AkamaiIdentityCloudStarterAutoConfiguration {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
 
-    init {
-        println("Stage A")
-    }
-
     @Bean
     @ConditionalOnMissingBean
     fun factory(
         @Value("\${akamai.identitycloud.accounts.baseurl:}") baseUrl: String,
         @Value("\${akamai.identitycloud.accounts.clientid:}") clientId: String,
         @Value("\${akamai.identitycloud.accounts.clientsecret:}") clientSecret: String,
+        @Value("\${akamai.identitycloud.accounts.timezone:}") timezone: String,
     ): AkamaiIdentityCloudConfigFactory {
         log.debug("factory::baseUrl = $baseUrl")
         log.debug("factory::clientId = $clientId")
 
-        return AkamaiIdentityCloudConfigFactory(baseUrl, clientId, clientSecret)
+        return AkamaiIdentityCloudConfigFactory(baseUrl, clientId, clientSecret, timezone)
     }
 
     @Bean
