@@ -1,4 +1,4 @@
-package nl.marcenschede.starters.akamaiidentitycloud
+package nl.marcenschede.starters.akamaiidentitycloud.config
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

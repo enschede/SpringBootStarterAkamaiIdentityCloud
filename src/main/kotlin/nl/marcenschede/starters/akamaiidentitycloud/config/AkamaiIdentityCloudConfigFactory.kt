@@ -1,9 +1,9 @@
-package nl.marcenschede.starters.akamaiidentitycloud
+package nl.marcenschede.starters.akamaiidentitycloud.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.util.StringUtils.hasText
-import java.net.URL
+import org.springframework.web.client.RestTemplate
 import java.time.Clock
 import java.time.ZoneId
 
@@ -21,11 +21,12 @@ class AkamaiIdentityCloudConfigFactory(
             val clock = Clock.system(ZoneId.of(zoneId))
 
             return AkamaiIdentityCloudConfig(
-                url = if (hasText(baseUrl)) URL(baseUrl!!) else throw IllegalArgumentException("akamai.identitycloud.accounts.baseurl property missing"),
+                url = baseUrl ?: throw IllegalArgumentException("akamai.identitycloud.accounts.baseurl property missing"),
                 objectMapper = objectMapper,
                 clock = clock,
                 clientId = if (hasText(clientId)) clientId!! else throw IllegalArgumentException("akamai.identitycloud.accounts.clientid property missing"),
                 clientSecret = if (hasText(clientSecret)) clientSecret!! else throw IllegalArgumentException("akamai.identitycloud.accounts.clientsecret property missing"),
+                RestTemplate()
             )
         }
 }
