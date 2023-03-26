@@ -11,17 +11,18 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class Account(
-    var id: String,
-    var uuid: String,
+    var id: String? = null,
+    var uuid: UUID? = null,
     @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
     @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
-    var created: OffsetDateTime,
+    var created: OffsetDateTime? = null,
     @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
     @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
-    var lastUpdated: OffsetDateTime,
+    var lastUpdated: OffsetDateTime? = null,
 )
 
 class CustomAkamaiDateTimeDeserializer : StdScalarDeserializer<OffsetDateTime>(OffsetDateTime::class.java) {
