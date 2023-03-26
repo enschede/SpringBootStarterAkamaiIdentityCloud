@@ -1,7 +1,7 @@
 package nl.marcenschede.starters.akamaiidentitycloud.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiCreateDsl
+import nl.marcenschede.starters.akamaiidentitycloud.update.SingleAccountResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -20,14 +20,14 @@ class AkamaiIdentityCloudConfigDslTest {
         val expectedClientId = "a"
         val expectedClientSecret = "b"
         val config = akamaiIdentityCloudConfig {
-            this.url = expectedUrl
-            this.clock = Clock.systemUTC()
-            this.clientId = expectedClientId
-            this.clientSecret = expectedClientSecret
-            this.restTemplate = expectedRestTemplate
-            this.objectMapper = expectedObjectMapper
-            this.singleElementDecoder = {
-                AkamaiCreateDsl.SingleAccountResponse(null)
+            url = expectedUrl
+            clock = Clock.systemUTC()
+            clientId = expectedClientId
+            clientSecret = expectedClientSecret
+            restTemplate = expectedRestTemplate
+            objectMapper = expectedObjectMapper
+            singleElementDecoder = {
+                SingleAccountResponse(null)
             }
         }
 
@@ -44,13 +44,13 @@ class AkamaiIdentityCloudConfigDslTest {
     fun `when clock not set then exception`() {
         assertThrows<IllegalArgumentException> {
             akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clientId = "expectedClientId"
-                this.clientSecret = "expectedClientSecret"
-                this.restTemplate = RestTemplate()
-                this.objectMapper = ObjectMapper()
-                this.singleElementDecoder = {
-                    AkamaiCreateDsl.SingleAccountResponse(null)
+                url = "https://nu.nl/"
+                clientId = "expectedClientId"
+                clientSecret = "expectedClientSecret"
+                restTemplate = RestTemplate()
+                objectMapper = ObjectMapper()
+                singleElementDecoder = {
+                    SingleAccountResponse(null)
                 }
             }
         }
@@ -60,13 +60,14 @@ class AkamaiIdentityCloudConfigDslTest {
     fun `when clientId not set then exception`() {
         assertThrows<IllegalArgumentException> {
             akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clock = Clock.systemUTC()
-                this.clientSecret = "expectedClientSecret"
-                this.restTemplate = RestTemplate()
-                this.objectMapper = ObjectMapper()
-                this.singleElementDecoder = {
-                    AkamaiCreateDsl.SingleAccountResponse(null)
+                "https://nu.nl/".also { this.url = it }
+                clock = Clock.systemUTC()
+                clientId = ""
+                clientSecret = "expectedClientSecret"
+                restTemplate = RestTemplate()
+                objectMapper = ObjectMapper()
+                singleElementDecoder = {
+                    SingleAccountResponse(null)
                 }
             }
         }
@@ -76,13 +77,14 @@ class AkamaiIdentityCloudConfigDslTest {
     fun `when clientSecret not set then exception`() {
         assertThrows<IllegalArgumentException> {
             akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clock = Clock.systemUTC()
-                this.clientId = "expectedClientId"
-                this.restTemplate = RestTemplate()
-                this.objectMapper = ObjectMapper()
-                this.singleElementDecoder = {
-                    AkamaiCreateDsl.SingleAccountResponse(null)
+                url = "https://nu.nl/"
+                clock = Clock.systemUTC()
+                clientId = "expectedClientId"
+                clientSecret = ""
+                restTemplate = RestTemplate()
+                objectMapper = ObjectMapper()
+                singleElementDecoder = {
+                    SingleAccountResponse(null)
                 }
             }
         }
@@ -92,12 +94,12 @@ class AkamaiIdentityCloudConfigDslTest {
     fun `when singleElementDecoder not set then exception`() {
         assertThrows<IllegalArgumentException> {
             akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clock = Clock.systemUTC()
-                this.clientId = "expectedClientId"
-                this.clientSecret = "expectedClientSecret"
-                this.restTemplate = RestTemplate()
-                this.objectMapper = ObjectMapper()
+                url = "https://nu.nl/"
+                clock = Clock.systemUTC()
+                clientId = "expectedClientId"
+                clientSecret = "expectedClientSecret"
+                restTemplate = RestTemplate()
+                objectMapper = ObjectMapper()
             }
         }
     }
@@ -105,13 +107,13 @@ class AkamaiIdentityCloudConfigDslTest {
     @Test
     fun `when restTemplate not set then default`() {
         val config =    akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clock = Clock.systemUTC()
-                this.clientId = "expectedClientId"
-                this.clientSecret = "expectedClientSecret"
-                this.objectMapper = ObjectMapper()
-                this.singleElementDecoder = {
-                    AkamaiCreateDsl.SingleAccountResponse(null)
+                url = "https://nu.nl/"
+                clock = Clock.systemUTC()
+                clientId = "expectedClientId"
+                clientSecret = "expectedClientSecret"
+                objectMapper = ObjectMapper()
+                singleElementDecoder = {
+                    SingleAccountResponse(null)
                 }
             }
 
@@ -122,13 +124,13 @@ class AkamaiIdentityCloudConfigDslTest {
     @Test
     fun `when objectMapper not set then default`() {
         val config =    akamaiIdentityCloudConfig {
-                this.url = "https://nu.nl/"
-                this.clock = Clock.systemUTC()
-                this.clientId = "expectedClientId"
-                this.clientSecret = "expectedClientSecret"
-                this.restTemplate = RestTemplate()
-                this.singleElementDecoder = {
-                    AkamaiCreateDsl.SingleAccountResponse(null)
+                url = "https://nu.nl/"
+                clock = Clock.systemUTC()
+                clientId = "expectedClientId"
+                clientSecret = "expectedClientSecret"
+                restTemplate = RestTemplate()
+                singleElementDecoder = {
+                    SingleAccountResponse(null)
                 }
             }
 
@@ -143,13 +145,13 @@ class AkamaiIdentityCloudConfigDslTest {
 
             assertThrows<IllegalArgumentException> {
                 akamaiIdentityCloudConfig {
-                    this.clock = Clock.systemUTC()
-                    this.clientId = "expectedClientId"
-                    this.clientSecret = "expectedClientSecret"
-                    this.restTemplate = RestTemplate()
-                    this.objectMapper = ObjectMapper()
-                    this.singleElementDecoder = {
-                        AkamaiCreateDsl.SingleAccountResponse(null)
+                    clock = Clock.systemUTC()
+                    clientId = "expectedClientId"
+                    clientSecret = "expectedClientSecret"
+                    restTemplate = RestTemplate()
+                    objectMapper = ObjectMapper()
+                    singleElementDecoder = {
+                        SingleAccountResponse(null)
                     }
                 }
             }
@@ -160,14 +162,14 @@ class AkamaiIdentityCloudConfigDslTest {
 
             assertThrows<IllegalArgumentException> {
                 akamaiIdentityCloudConfig {
-                    this.url = ""
-                    this.clock = Clock.systemUTC()
-                    this.clientId = "expectedClientId"
-                    this.clientSecret = "expectedClientSecret"
-                    this.restTemplate = RestTemplate()
-                    this.objectMapper = ObjectMapper()
-                    this.singleElementDecoder = {
-                        AkamaiCreateDsl.SingleAccountResponse(null)
+                    url = ""
+                    clock = Clock.systemUTC()
+                    clientId = "expectedClientId"
+                    clientSecret = "expectedClientSecret"
+                    restTemplate = RestTemplate()
+                    objectMapper = ObjectMapper()
+                    singleElementDecoder = {
+                        SingleAccountResponse(null)
                     }
                 }
             }
@@ -178,14 +180,14 @@ class AkamaiIdentityCloudConfigDslTest {
 
             assertThrows<IllegalArgumentException> {
                 akamaiIdentityCloudConfig {
-                    this.url = "aapjeskijken"
-                    this.clock = Clock.systemUTC()
-                    this.clientId = "expectedClientId"
-                    this.clientSecret = "expectedClientSecret"
-                    this.restTemplate = RestTemplate()
-                    this.objectMapper = ObjectMapper()
-                    this.singleElementDecoder = {
-                        AkamaiCreateDsl.SingleAccountResponse(null)
+                    url = "aapjeskijken"
+                    clock = Clock.systemUTC()
+                    clientId = "expectedClientId"
+                    clientSecret = "expectedClientSecret"
+                    restTemplate = RestTemplate()
+                    objectMapper = ObjectMapper()
+                    singleElementDecoder = {
+                        SingleAccountResponse(null)
                     }
                 }
             }

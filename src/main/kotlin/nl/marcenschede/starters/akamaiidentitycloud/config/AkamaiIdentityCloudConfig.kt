@@ -1,8 +1,10 @@
 package nl.marcenschede.starters.akamaiidentitycloud.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiCreateDsl
+import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiResponse
+import nl.marcenschede.starters.akamaiidentitycloud.update.SingleAccountResponse
 import org.springframework.boot.web.client.RestTemplateBuilder
+import org.springframework.util.StringUtils.hasText
 import org.springframework.web.client.RestTemplate
 import java.net.URL
 import java.time.Clock
@@ -23,8 +25,8 @@ class AkamaiIdentityCloudConfigDsl {
     var clientSecret: String? = null
     var restTemplate: RestTemplate? = null
     var objectMapper: ObjectMapper? = null
-    var singleElementDecoder: ((String) -> AkamaiCreateDsl.SingleAccountResponse)? = null
-    var multiElementDecoder: ((String) -> AkamaiCreateDsl.AkamaiResponse)? = null
+    var singleElementDecoder: ((String) -> SingleAccountResponse)? = null
+    var multiElementDecoder: ((String) -> AkamaiResponse)? = null
 
     private fun exceptOnInvalidUrl() {
         if (url == null || url!!.length == 0)
@@ -40,14 +42,15 @@ class AkamaiIdentityCloudConfigDsl {
     fun build(): AkamaiIdentityCloudConfig {
         exceptOnInvalidUrl()
 
-      return  AkamaiIdentityCloudConfig(
+        return AkamaiIdentityCloudConfig(
             url = url!!,
             objectMapper = this.objectMapper ?: ObjectMapper(),
             clock = clock ?: throw IllegalArgumentException("clock is mandatory"),
-            clientId = clientId ?: throw IllegalArgumentException("clientid is mandatory"),
-            clientSecret = clientSecret ?: throw IllegalArgumentException("clientSecret is mandatory"),
+            clientId = if (hasText(clientId)) clientId!! else throw IllegalArgumentException("clientid is mandatory"),
+            clientSecret = if (hasText(clientSecret)) clientSecret!! else  throw IllegalArgumentException("clientSecret is mandatory"),
             restTemplate = restTemplate ?: RestTemplateBuilder().build(),
-            singleElementDecoder = singleElementDecoder ?: throw IllegalArgumentException("singleElementDecoder is mandatory"),
+            singleElementDecoder = singleElementDecoder
+                ?: throw IllegalArgumentException("singleElementDecoder is mandatory"),
 
             )
     }
@@ -61,7 +64,7 @@ data class AkamaiIdentityCloudConfig(
     val clientId: String,
     val clientSecret: String,
     val restTemplate: RestTemplate,
-    val singleElementDecoder: (String) -> AkamaiCreateDsl.SingleAccountResponse
+    val singleElementDecoder: (String) -> SingleAccountResponse
 ) {
     val getUri by lazy {
         URL(url + ENDPOINT_ENTITY_GET).toURI()
