@@ -1,5 +1,6 @@
 package nl.marcenschede.starters.akamaiidentitycloud
 
+import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 
@@ -7,7 +8,7 @@ import org.springframework.test.context.TestPropertySource
 @TestPropertySource("/application.properties")
 class SpringBootStarterAkamaiIdentityCloudApplicationTests {
 
-//    @Test
+    @Test
     fun contextLoads() {
     }
 

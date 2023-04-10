@@ -208,26 +208,6 @@ class AkamaiIdentityCloudConfigDslTest {
         }
     }
 
-//    @Test
-//    fun `test type override`() {
-//
-//        val config = akamaiIdentityCloudConfig {
-//            url = "http://nu.nl"
-//            clock = Clock.systemUTC()
-//            clientId = "expectedClientId"
-//            clientSecret = "expectedClientSecret"
-////            restTemplate = expectedRestTemplate
-////            objectMapper = expectedObjectMapper
-//            singleElementDecoder = {
-//                objectMapper!!.readValue(it, SingleExtendedAccountResponse::class.java)
-//            }
-//
-//        }
-//
-//        val singleExtendedAccountResponse = config.singleElementDecoder.invoke("") as SingleExtendedAccountResponse
-//
-//    }
-
     class ExtendedAccount(
         id: String,
         uuid: UUID,
