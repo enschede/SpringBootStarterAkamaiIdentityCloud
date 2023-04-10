@@ -6,8 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_CREATE
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiUpdateDsl.UpdateError.HttpError
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiUpdateDsl.UpdateError.TechnicalError
+import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError.HttpError
+import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError.TechnicalError
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -18,21 +18,21 @@ import java.util.*
 fun createAccount(
     config: AkamaiIdentityCloudConfig,
     f: AkamaiCreateDsl.() -> Unit
-): Either<AkamaiUpdateDsl.UpdateError, Account> {
+): Either<PersistenceError, Account> {
     return AkamaiCreateDsl(config).apply(f).execute()
 }
 
 class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
     val attributes = mutableMapOf<String, Any?>()
 
-    fun execute(): Either<AkamaiUpdateDsl.UpdateError, Account> {
+    fun execute(): Either<PersistenceError, Account> {
         return createValues(attributes)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
             .flatMap { postRequest(it) }
     }
 
-    private fun createValues(attributes: MutableMap<String, Any?>): Either<AkamaiUpdateDsl.UpdateError, String> {
+    private fun createValues(attributes: MutableMap<String, Any?>): Either<PersistenceError, String> {
         return try {
             Either.Right(config.objectMapper.writeValueAsString(attributes))
         } catch (e: JsonProcessingException) {
@@ -77,7 +77,7 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
 
     private fun postRequest(
         input: HeaderParameterPair
-    ): Either<AkamaiUpdateDsl.UpdateError, Account> {
+    ): Either<PersistenceError, Account> {
 
         val headers = input.httpHeaders
 
@@ -93,7 +93,7 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
 
                     "error" -> {
                         Either.Left(
-                            AkamaiUpdateDsl.UpdateError.AkamaiError(
+                            PersistenceError.AkamaiError(
                                 forEntity.error,
                                 forEntity.errorDescription
                             )
@@ -106,7 +106,7 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
 
                     else -> {
                         Either.Left(
-                            AkamaiUpdateDsl.UpdateError.AkamaiError(
+                            PersistenceError.AkamaiError(
                                 forEntity.error,
                                 forEntity.errorDescription
                             )

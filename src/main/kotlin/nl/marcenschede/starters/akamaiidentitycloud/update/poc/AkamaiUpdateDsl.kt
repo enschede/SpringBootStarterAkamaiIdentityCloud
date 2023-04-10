@@ -1,4 +1,4 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update
+package nl.marcenschede.starters.akamaiidentitycloud.update.poc
 
 import arrow.core.Either
 import arrow.core.flatMap
@@ -7,9 +7,12 @@ import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.account.AkamaiResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_UPDATE
+import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiCreateDsl
+import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError
+import nl.marcenschede.starters.akamaiidentitycloud.update.calculateAkamaiSignature
+import nl.marcenschede.starters.akamaiidentitycloud.update.createTimestap
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
@@ -25,7 +28,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
     val attributes = mutableMapOf<String, Any?>()
 
-    fun execute(): Either<UpdateError, Any> {
+    fun execute(): Either<PersistenceError, Any> {
 
         return createUpdateValues(attributes)
             .flatMap { createFormParams(it) }
@@ -33,11 +36,11 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
             .flatMap { postRequest(it) }
     }
 
-    private fun createUpdateValues(attributes: MutableMap<String, Any?>): Either<UpdateError, String> {
+    private fun createUpdateValues(attributes: MutableMap<String, Any?>): Either<PersistenceError, String> {
         return try {
             Either.Right(config.objectMapper.writeValueAsString(attributes))
         } catch (e: JsonProcessingException) {
-            Either.Left(UpdateError.TechnicalError("Json parsing", e))
+            Either.Left(PersistenceError.TechnicalError("Json parsing", e))
         }
     }
 
@@ -74,7 +77,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
     private fun postRequest(
         input: AkamaiCreateDsl.HeaderParameterPair,
-    ): Either<UpdateError, Account> {
+    ): Either<PersistenceError, Account> {
 
         val headers = input.httpHeaders
 
@@ -92,7 +95,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
                         println("postRequest::error::forEntity.body.error = ${forEntity.body?.error}")
                         println("postRequest::error::forEntity.body.errorDescription = ${forEntity.body?.errorDescription}")
                         Either.Left(
-                            UpdateError.AkamaiError(
+                            PersistenceError.AkamaiError(
                                 forEntity.body?.error,
                                 forEntity.body?.errorDescription
                             )
@@ -101,13 +104,13 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
                     "fail" -> {
                         println("postRequest::fail::forEntity.body = ${forEntity.body}")
-                        Either.Left(UpdateError.TechnicalError(""))
+                        Either.Left(PersistenceError.TechnicalError(""))
                     }
 
                     else -> {
                         println("postRequest::else::forEntity.body = ${forEntity.body}")
                         Either.Left(
-                            UpdateError.AkamaiError(
+                            PersistenceError.AkamaiError(
                                 forEntity.body?.error,
                                 forEntity.body?.errorDescription
                             )
@@ -118,15 +121,9 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
             else -> {
                 println("postRequest::else::forEntity.body = ${forEntity.body}")
-                Either.Left(UpdateError.HttpError(forEntity.statusCode))
+                Either.Left(PersistenceError.HttpError(forEntity.statusCode))
             }
         }
     }
 
-    sealed class UpdateError {
-        data class TechnicalError(val message: String, val e: Throwable? = null) : UpdateError()
-        data class AkamaiError(val error: String?, val errorDescription: String?) : UpdateError()
-        data class HttpError(val status: HttpStatus) : UpdateError()
-
-    }
 }
