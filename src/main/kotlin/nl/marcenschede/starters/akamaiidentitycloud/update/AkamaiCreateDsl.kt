@@ -6,9 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_CREATE
-import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError.HttpError
 import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError.TechnicalError
-import org.springframework.http.HttpEntity
+import nl.marcenschede.starters.akamaiidentitycloud.update.SingleResponsePostRequest.HeaderParameterPair
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
@@ -23,13 +22,15 @@ fun createAccount(
 }
 
 class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
+    val requestor = SingleResponsePostRequest(config)
+
     val attributes = mutableMapOf<String, Any?>()
 
     fun execute(): Either<PersistenceError, Account> {
         return createValues(attributes)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
-            .flatMap { postRequest(it) }
+            .flatMap { requestor.postRequest(it, ENDPOINT_ENTITY_CREATE) }
     }
 
     private fun createValues(attributes: MutableMap<String, Any?>): Either<PersistenceError, String> {
@@ -62,61 +63,14 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
         httpHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
         val timestamp = createTimestap(config)
         httpHeaders["Date"] = timestamp
-        httpHeaders["Authorization"] = calculateAkamaiSignature(config.clientId,config.clientSecret,timestamp,ENDPOINT_ENTITY_CREATE) {
-            for ((key, value) in treeMap) {
-                header(key, value)
-            }
-        }
-
-        return Either.Right(HeaderParameterPair(map, httpHeaders))
-    }
-
-    class HeaderParameterPair(val map: MultiValueMap<String, String>, val httpHeaders: HttpHeaders)
-
-    private fun postRequest(
-        input: HeaderParameterPair
-    ): Either<PersistenceError, Account> {
-
-        val headers = input.httpHeaders
-
-        val request = HttpEntity(input.map, headers)
-        val response = config.restTemplate.postForEntity(config.createUri, request, String::class.java)
-
-        return when {
-            response.statusCode.is2xxSuccessful -> {
-                val forEntity = config.singleElementDecoder.invoke(response.body!!)
-
-                when (forEntity.stat) {
-                    "ok" -> Either.Right(forEntity.result!!)
-
-                    "error" -> {
-                        Either.Left(
-                            PersistenceError.AkamaiError(
-                                forEntity.error,
-                                forEntity.errorDescription
-                            )
-                        )
-                    }
-
-                    "fail" -> {
-                        Either.Left(TechnicalError(forEntity.errorDescription ?: ""))
-                    }
-
-                    else -> {
-                        Either.Left(
-                            PersistenceError.AkamaiError(
-                                forEntity.error,
-                                forEntity.errorDescription
-                            )
-                        )
-                    }
+        httpHeaders["Authorization"] =
+            calculateAkamaiSignature(config.clientId, config.clientSecret, timestamp, ENDPOINT_ENTITY_CREATE) {
+                for ((key, value) in treeMap) {
+                    header(key, value)
                 }
             }
 
-            else -> {
-                Either.Left(HttpError(response.statusCode))
-            }
-        }
+        return Either.Right(HeaderParameterPair(map, httpHeaders))
     }
 
 }

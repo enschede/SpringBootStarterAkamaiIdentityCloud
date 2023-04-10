@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_UPDATE
-import org.springframework.http.HttpEntity
+import nl.marcenschede.starters.akamaiidentitycloud.update.SingleResponsePostRequest.HeaderParameterPair
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
@@ -18,8 +18,9 @@ fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Un
 }
 
 class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
-    lateinit var uuid: UUID
+    val requestor = SingleResponsePostRequest(config)
 
+    lateinit var uuid: UUID
     val attributes = mutableMapOf<String, Any?>()
 
     fun execute(): Either<PersistenceError, Account> {
@@ -27,7 +28,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
         return createUpdateValues(attributes)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
-            .flatMap { postRequest(it) }
+            .flatMap { requestor. postRequest(it, ENDPOINT_ENTITY_UPDATE) }
     }
 
     private fun createUpdateValues(attributes: MutableMap<String, Any?>): Either<PersistenceError, String> {
@@ -38,11 +39,11 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
         }
     }
 
-    private fun createFormParams(it: String): Either.Right<MultiValueMap<String, String>> {
+    private fun createFormParams(attributes: String): Either.Right<MultiValueMap<String, String>> {
         val parameters: MultiValueMap<String, String> = LinkedMultiValueMap()
         parameters["type_name"] = "user"
         parameters["uuid"] = uuid.toString()
-        parameters["attributes"] = it
+        parameters["attributes"] = attributes
 
         parameters["include_record"] = "true"
 
@@ -68,54 +69,6 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
             }
 
         return Either.Right(HeaderParameterPair(map, httpHeaders))
-    }
-
-    class HeaderParameterPair(val map: MultiValueMap<String, String>, val httpHeaders: HttpHeaders)
-
-    private fun postRequest(
-        input: HeaderParameterPair,
-    ): Either<PersistenceError, Account> {
-
-        val headers = input.httpHeaders
-
-        val request = HttpEntity(input.map, headers)
-        val response = config.restTemplate.postForEntity(config.updateUri, request, String::class.java)
-
-        return when {
-            response.statusCode.is2xxSuccessful -> {
-                val forEntity = config.singleElementDecoder.invoke(response.body!!)
-
-                when (forEntity.stat) {
-                    "ok" -> Either.Right(forEntity.result!!)
-
-                    "error" -> {
-                        Either.Left(
-                            PersistenceError.AkamaiError(
-                                forEntity.error,
-                                forEntity.errorDescription
-                            )
-                        )
-                    }
-
-                    "fail" -> {
-                        Either.Left(PersistenceError.TechnicalError(forEntity.errorDescription ?: ""))
-                    }
-
-                    else -> {
-                        Either.Left(
-                            PersistenceError.AkamaiError(
-                                forEntity.error,
-                                forEntity.errorDescription
-                            )
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                Either.Left(PersistenceError.HttpError(response.statusCode))
-            }
-        }
     }
 
 }
