@@ -1,25 +1,19 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update.poc
+package nl.marcenschede.starters.akamaiidentitycloud.update
 
 import arrow.core.Either
 import arrow.core.flatMap
 import com.fasterxml.jackson.core.JsonProcessingException
 import nl.marcenschede.starters.akamaiidentitycloud.account.Account
-import nl.marcenschede.starters.akamaiidentitycloud.account.AkamaiResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_UPDATE
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiCreateDsl
-import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError
-import nl.marcenschede.starters.akamaiidentitycloud.update.calculateAkamaiSignature
-import nl.marcenschede.starters.akamaiidentitycloud.update.createTimestap
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import java.time.OffsetDateTime
 import java.util.*
 
-fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Unit): Any {
+fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Unit): Either<PersistenceError, Account> {
     return AkamaiUpdateDsl(config).apply(f).execute()
 }
 
@@ -28,7 +22,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
     val attributes = mutableMapOf<String, Any?>()
 
-    fun execute(): Either<PersistenceError, Any> {
+    fun execute(): Either<PersistenceError, Account> {
 
         return createUpdateValues(attributes)
             .flatMap { createFormParams(it) }
@@ -50,10 +44,12 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
         parameters["uuid"] = uuid.toString()
         parameters["attributes"] = it
 
+        parameters["include_record"] = "true"
+
         return Either.Right(parameters)
     }
 
-    private fun createHeaders(map: MultiValueMap<String, String>): Either.Right<AkamaiCreateDsl.HeaderParameterPair> {
+    private fun createHeaders(map: MultiValueMap<String, String>): Either.Right<HeaderParameterPair> {
         val treeMap = TreeMap<String, String>()
         for (key in TreeSet(map.keys)) {
             val a = map[key]!![0]
@@ -71,47 +67,45 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
                 }
             }
 
-        return Either.Right(AkamaiCreateDsl.HeaderParameterPair(map, httpHeaders))
+        return Either.Right(HeaderParameterPair(map, httpHeaders))
     }
 
+    class HeaderParameterPair(val map: MultiValueMap<String, String>, val httpHeaders: HttpHeaders)
+
     private fun postRequest(
-        input: AkamaiCreateDsl.HeaderParameterPair,
+        input: HeaderParameterPair,
     ): Either<PersistenceError, Account> {
 
         val headers = input.httpHeaders
 
         val request = HttpEntity(input.map, headers)
-        println("postRequest::request = $request")
-        val forEntity = config.restTemplate.postForEntity(config.updateUri, request, AkamaiResponse::class.java)
+        val response = config.restTemplate.postForEntity(config.updateUri, request, String::class.java)
 
-        return when (forEntity.statusCodeValue) {
-            200, 201, 202, 203, 204, 205, 206, 207, 208, 226 -> {
-                when (forEntity.body?.stat) {
-                    "ok" -> Either.Right(Account("1", UUID.randomUUID(), OffsetDateTime.now(), OffsetDateTime.now()))
+        return when {
+            response.statusCode.is2xxSuccessful -> {
+                val forEntity = config.singleElementDecoder.invoke(response.body!!)
+
+                when (forEntity.stat) {
+                    "ok" -> Either.Right(forEntity.result!!)
+
                     "error" -> {
-                        println("postRequest::error::forEntity = ${forEntity}")
-                        println("postRequest::error::forEntity.body.stat = ${forEntity.body?.stat}")
-                        println("postRequest::error::forEntity.body.error = ${forEntity.body?.error}")
-                        println("postRequest::error::forEntity.body.errorDescription = ${forEntity.body?.errorDescription}")
                         Either.Left(
                             PersistenceError.AkamaiError(
-                                forEntity.body?.error,
-                                forEntity.body?.errorDescription
+                                forEntity.error,
+                                forEntity.errorDescription
                             )
                         )
                     }
 
                     "fail" -> {
-                        println("postRequest::fail::forEntity.body = ${forEntity.body}")
-                        Either.Left(PersistenceError.TechnicalError(""))
+                        Either.Left(PersistenceError.TechnicalError(forEntity.errorDescription ?: ""))
                     }
 
                     else -> {
-                        println("postRequest::else::forEntity.body = ${forEntity.body}")
                         Either.Left(
                             PersistenceError.AkamaiError(
-                                forEntity.body?.error,
-                                forEntity.body?.errorDescription
+                                forEntity.error,
+                                forEntity.errorDescription
                             )
                         )
                     }
@@ -119,8 +113,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
             }
 
             else -> {
-                println("postRequest::else::forEntity.body = ${forEntity.body}")
-                Either.Left(PersistenceError.HttpError(forEntity.statusCode))
+                Either.Left(PersistenceError.HttpError(response.statusCode))
             }
         }
     }
