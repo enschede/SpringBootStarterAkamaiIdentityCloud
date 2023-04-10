@@ -2,8 +2,8 @@ package nl.marcenschede.starters.akamaiidentitycloud
 
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.update.createAccount
+import nl.marcenschede.starters.akamaiidentitycloud.update.findAccount
 import nl.marcenschede.starters.akamaiidentitycloud.update.getAccount
-import nl.marcenschede.starters.akamaiidentitycloud.update.poc.findAccount
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 

@@ -3,10 +3,7 @@ package nl.marcenschede.starters.akamaiidentitycloud.update
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
-import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeDeserializer
-import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeSerializer
-import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
+import nl.marcenschede.starters.akamaiidentitycloud.account.*
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -33,3 +30,8 @@ class ExtendedAccount(
 class SingleExtendedAccountResponse(
     override val result: ExtendedAccount? = null,
 ) : SingleAccountResponse()
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+open class MultiExtendedAccountResponse(
+    override val result: List<ExtendedAccount>? = null,
+) : MultiAccountResponse()

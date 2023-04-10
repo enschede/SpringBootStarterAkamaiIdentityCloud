@@ -37,6 +37,9 @@ class AkamaiCreateDslTest {
                 this.singleElementDecoder = {
                     objectMapper.readValue(it, SingleAccountResponse::class.java)
                 }
+                this.multiElementDecoder = {
+                    objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
+                }
             }
 
             mockServer
@@ -97,6 +100,9 @@ class AkamaiCreateDslTest {
                 this.restTemplate = restTemplate
                 this.singleElementDecoder = {
                     objectMapper.readValue(it, SingleExtendedAccountResponse::class.java)
+                }
+                this.multiElementDecoder = {
+                    objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
                 }
             }
 

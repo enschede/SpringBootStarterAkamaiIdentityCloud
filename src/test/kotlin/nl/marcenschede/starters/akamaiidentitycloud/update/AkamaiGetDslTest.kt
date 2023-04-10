@@ -1,5 +1,6 @@
 package nl.marcenschede.starters.akamaiidentitycloud.update
 
+import nl.marcenschede.starters.akamaiidentitycloud.account.MultiAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.JacksonConfiguration
 import nl.marcenschede.starters.akamaiidentitycloud.config.akamaiIdentityCloudConfig
@@ -32,6 +33,9 @@ class AkamaiGetDslTest {
             this.restTemplate = restTemplate
             this.singleElementDecoder = {
                 objectMapper.readValue(it, SingleAccountResponse::class.java)
+            }
+            this.multiElementDecoder = {
+                objectMapper.readValue(it, MultiAccountResponse::class.java)
             }
         }
 
@@ -90,6 +94,9 @@ class AkamaiGetDslTest {
             this.restTemplate = restTemplate
             this.singleElementDecoder = {
                 objectMapper.readValue(it, SingleExtendedAccountResponse::class.java)
+            }
+            this.multiElementDecoder = {
+                objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
             }
         }
 

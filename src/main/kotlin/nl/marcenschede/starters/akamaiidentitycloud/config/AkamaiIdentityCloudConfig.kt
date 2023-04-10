@@ -8,7 +8,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import nl.marcenschede.starters.akamaiidentitycloud.account.AkamaiResponse
+import nl.marcenschede.starters.akamaiidentitycloud.account.MultiAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
 import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.util.StringUtils.hasText
@@ -33,7 +33,7 @@ class AkamaiIdentityCloudConfigDsl {
     var restTemplate: RestTemplate? = null
     var objectMapper: ObjectMapper? = null
     var singleElementDecoder: ((String) -> SingleAccountResponse)? = null
-    var multiElementDecoder: ((String) -> AkamaiResponse)? = null
+    var multiElementDecoder: ((String) -> MultiAccountResponse)? = null
 
     private fun exceptOnInvalidUrl() {
         if (url == null || url!!.length == 0)
@@ -67,7 +67,8 @@ class AkamaiIdentityCloudConfigDsl {
             restTemplate = restTemplate ?: RestTemplateBuilder().build(),
             singleElementDecoder = singleElementDecoder
                 ?: throw IllegalArgumentException("singleElementDecoder is mandatory"),
-
+            multiElementDecoder = multiElementDecoder
+                ?: throw IllegalArgumentException("multiElementDecoder is mandatory"),
             )
     }
 }
@@ -80,7 +81,8 @@ data class AkamaiIdentityCloudConfig(
     val clientId: String,
     val clientSecret: String,
     val restTemplate: RestTemplate,
-    val singleElementDecoder: (String) -> SingleAccountResponse
+    val singleElementDecoder: (String) -> SingleAccountResponse,
+    val multiElementDecoder: (String) -> MultiAccountResponse,
 ) {
     val getUri by lazy {
         URL(url + ENDPOINT_ENTITY_GET).toURI()

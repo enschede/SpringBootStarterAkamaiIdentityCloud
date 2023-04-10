@@ -18,3 +18,9 @@ open class AkamaiResponse {
 open class SingleAccountResponse(
     open val result: Account? = null,
 ) : AkamaiResponse()
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+open class MultiAccountResponse(
+    open val result: List<Account>? = null,
+) : AkamaiResponse()
+

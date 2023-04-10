@@ -1,5 +1,6 @@
 package nl.marcenschede.starters.akamaiidentitycloud.update
 
+import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.JacksonConfiguration
 import nl.marcenschede.starters.akamaiidentitycloud.config.akamaiIdentityCloudConfig
 import org.assertj.core.api.Assertions.assertThat
@@ -15,10 +16,10 @@ import java.time.Clock
 import java.time.OffsetDateTime
 import java.util.*
 
-class AkamaiUpdateDslTest {
+class AkamaiFindDslTest {
 
     @Test
-    fun `when extended item is created then message is send to identity cloud`() {
+    fun `when extended item is updated then message is send to identity cloud`() {
         val objectMapper = JacksonConfiguration().objectMapper()
         val restTemplate = RestTemplate()
         val mockServer = MockRestServiceServer.bindTo(restTemplate).build(SimpleRequestExpectationManager())
@@ -30,7 +31,7 @@ class AkamaiUpdateDslTest {
             this.clientSecret = "secret"
             this.restTemplate = restTemplate
             this.singleElementDecoder = {
-                objectMapper.readValue(it, SingleExtendedAccountResponse::class.java)
+                objectMapper.readValue(it, SingleAccountResponse::class.java)
             }
             this.multiElementDecoder = {
                 objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
@@ -38,11 +39,11 @@ class AkamaiUpdateDslTest {
         }
 
         mockServer
-            .expect(MockRestRequestMatchers.requestTo("http://localhost/entity.update"))
+            .expect(MockRestRequestMatchers.requestTo("http://localhost/entity.find"))
             .andExpect(
                 MockRestRequestMatchers.content().string(
                     """
-                type_name=user&uuid=b5eff84c-115d-4000-aee4-e3815e5c84c1&attributes=%7B%22email%22%3A%22marc%40marc.com%22%7D&include_record=true
+                type_name=user&filter=status%3D%27CLOSED%27
             """.trimIndent()
                 )
             )
@@ -52,35 +53,35 @@ class AkamaiUpdateDslTest {
                     """
                 {
                   "stat": "ok",
-                  "result": {
+                  "result":[{
                     "uuid": "b5eff84c-115d-4000-aee4-e3815e5c84c1",
                     "id": "1805281",
                     "created": "2023-03-18 22:23:24+01:00",
-                    "lastUpdated": "2023-03-18 22:23:24+01:00",
-                    "email": "marc@marc.com"
-                  }
+                    "lastUpdated": "2023-03-18 22:23:24+01:00"
+                  }, {
+                    "uuid": "b5eff84c-115d-4000-aee4-e3815e5c84c2",
+                    "id": "1805282",
+                    "created": "2023-03-18 22:23:24+01:00",
+                    "lastUpdated": "2023-03-18 22:23:24+01:00"
+                  }]
                 }
             """.trimIndent()
                 ).contentType(MediaType.APPLICATION_JSON)
             )
 
-        val account = accountUpdate(config) {
-            this.uuid = UUID.fromString("b5eff84c-115d-4000-aee4-e3815e5c84c1")
-
-            attributes["email"] = "marc@marc.com"
+        val account = findAccount(config) {
+            this.filter = "status='CLOSED'"
         }
 
         assertThat(account.isRight()).isTrue
+        assertThat(account.getOrNull()?.size).isEqualTo(2)
 
-        val expectedAccount = account.getOrNull() as ExtendedAccount?
+        val expectedAccount = account.getOrNull()?.get(0)
         assertThat(expectedAccount?.uuid).isEqualTo(UUID.fromString("b5eff84c-115d-4000-aee4-e3815e5c84c1"))
         assertThat(expectedAccount?.id).isEqualTo("1805281")
         assertThat(expectedAccount?.created).isEqualTo(OffsetDateTime.parse("2023-03-18T22:23:24+01:00"))
         assertThat(expectedAccount?.lastUpdated).isEqualTo(OffsetDateTime.parse("2023-03-18T22:23:24+01:00"))
-        assertThat(expectedAccount?.email).isEqualTo("marc@marc.com")
 
         mockServer.verify()
     }
-
-
 }

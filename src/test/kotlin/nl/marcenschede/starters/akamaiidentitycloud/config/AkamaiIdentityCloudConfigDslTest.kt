@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
-import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeDeserializer
-import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeSerializer
-import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
+import nl.marcenschede.starters.akamaiidentitycloud.account.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -36,6 +33,9 @@ class AkamaiIdentityCloudConfigDslTest {
             objectMapper = expectedObjectMapper
             singleElementDecoder = {
                 SingleAccountResponse(null)
+            }
+            this.multiElementDecoder = {
+                MultiAccountResponse(null)
             }
         }
 
@@ -123,6 +123,9 @@ class AkamaiIdentityCloudConfigDslTest {
             singleElementDecoder = {
                 SingleAccountResponse(null)
             }
+            this.multiElementDecoder = {
+                MultiAccountResponse(null)
+            }
         }
 
         assertThat(config.restTemplate).isNotNull
@@ -139,6 +142,9 @@ class AkamaiIdentityCloudConfigDslTest {
             restTemplate = RestTemplate()
             singleElementDecoder = {
                 SingleAccountResponse(null)
+            }
+            this.multiElementDecoder = {
+                MultiAccountResponse(null)
             }
         }
 
