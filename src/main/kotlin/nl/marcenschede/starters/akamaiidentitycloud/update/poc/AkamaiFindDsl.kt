@@ -17,13 +17,15 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.util.*
 
-fun findAccount(config: AkamaiIdentityCloudConfig, f: AkamaiFindDsl.() -> Unit): Either<PersistenceError, List<Account>?> {
+fun findAccount(
+    config: AkamaiIdentityCloudConfig,
+    f: AkamaiFindDsl.() -> Unit
+): Either<PersistenceError, List<Account>?> {
     return AkamaiFindDsl(config).apply(f).execute()
 }
 
 class AkamaiFindDsl(val config: AkamaiIdentityCloudConfig) {
     lateinit var filter: String
-
 
     fun execute(): Either<PersistenceError, List<Account>?> {
         return createFindValues(filter)
@@ -54,12 +56,10 @@ class AkamaiFindDsl(val config: AkamaiIdentityCloudConfig) {
         httpHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
         val timestamp = createTimestap(config)
         httpHeaders["Date"] = timestamp
-        httpHeaders["Authorization"] = calculateAkamaiSignature {
-            this.clientId = config.clientId
-            this.clientSecret = config.clientSecret
-            this.dateTime = timestamp
-            this.endpoint = ENDPOINT_ENTITY_FIND
-            this.params = treeMap
+        httpHeaders["Authorization"] = calculateAkamaiSignature(config.clientId, config.clientSecret, timestamp, ENDPOINT_ENTITY_FIND) {
+            for ((key, value) in treeMap) {
+                header(key, value)
+            }
         }
 
         return Either.Right(Pair(map, httpHeaders))

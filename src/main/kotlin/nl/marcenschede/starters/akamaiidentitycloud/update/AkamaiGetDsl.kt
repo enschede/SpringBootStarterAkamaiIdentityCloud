@@ -1,4 +1,4 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update.poc
+package nl.marcenschede.starters.akamaiidentitycloud.update
 
 import arrow.core.Either
 import arrow.core.flatMap
@@ -7,9 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_GET
-import nl.marcenschede.starters.akamaiidentitycloud.update.PersistenceError
-import nl.marcenschede.starters.akamaiidentitycloud.update.calculateAkamaiSignature
-import nl.marcenschede.starters.akamaiidentitycloud.update.createTimestap
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -24,12 +21,11 @@ fun getAccount(config: AkamaiIdentityCloudConfig, f: AkamaiGetDsl.() -> Unit): E
 class AkamaiGetDsl(val config: AkamaiIdentityCloudConfig) {
     lateinit var uuid: String
 
-
     fun execute(): Either<PersistenceError, Account?> {
         return createFindValues(uuid)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
-            .flatMap { postRequest(it.first, it.second) }
+            .flatMap { postRequest(it) }
     }
 
     private fun createFindValues(uuid: String): Either<PersistenceError, String> {
@@ -44,7 +40,9 @@ class AkamaiGetDsl(val config: AkamaiIdentityCloudConfig) {
         return Either.Right(parameters)
     }
 
-    private fun createHeaders(map: MultiValueMap<String, String>): Either<PersistenceError, Pair<MultiValueMap<String, String>, HttpHeaders>> {
+    class HeaderParameterPair(val map: MultiValueMap<String, String>, val httpHeaders: HttpHeaders)
+
+    private fun createHeaders(map: MultiValueMap<String, String>): Either.Right<HeaderParameterPair> {
         val treeMap = TreeMap<String, String>()
         for (key in TreeSet(map.keys)) {
             treeMap[key] = map[key]!![0]
@@ -54,34 +52,56 @@ class AkamaiGetDsl(val config: AkamaiIdentityCloudConfig) {
         httpHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
         val timestamp = createTimestap(config)
         httpHeaders["Date"] = timestamp
-        httpHeaders["Authorization"] = calculateAkamaiSignature {
-            this.clientId = config.clientId
-            this.clientSecret = config.clientSecret
-            this.dateTime = timestamp
-            this.endpoint = ENDPOINT_ENTITY_GET
-            this.params = treeMap
+        httpHeaders["Authorization"] = calculateAkamaiSignature(config.clientId,config.clientSecret,timestamp,ENDPOINT_ENTITY_GET){
+            for ((key, value) in treeMap) {
+                header(key,value)
+            }
         }
 
-        return Either.Right(Pair(map, httpHeaders))
+        return Either.Right(HeaderParameterPair(map, httpHeaders))
     }
 
     private fun postRequest(
-        attributes: MultiValueMap<String, String>,
-        headers: HttpHeaders
+        input: HeaderParameterPair
     ): Either<PersistenceError, Account?> {
 
-        val request = HttpEntity(attributes, headers)
-        val forEntity = config.restTemplate.postForEntity(config.getUri, request, FindAccountResponse::class.java)
+        val request = HttpEntity(input.map, input.httpHeaders)
+        val response = config.restTemplate.postForEntity(config.getUri, request, String::class.java)
 
-        return when (forEntity.statusCodeValue) {
-            200 -> {
-                when (forEntity.body?.stat) {
-                    "ok" -> Either.Right(forEntity.body?.result)
-                    else -> Either.Left(PersistenceError.TechnicalError(""))
+        return when {
+            response.statusCode.is2xxSuccessful -> {
+                val forEntity = config.singleElementDecoder.invoke(response.body!!)
+
+                when (forEntity.stat) {
+                    "ok" -> Either.Right(forEntity.result!!)
+
+                    "error" -> {
+                        Either.Left(
+                            PersistenceError.AkamaiError(
+                                forEntity.error,
+                                forEntity.errorDescription
+                            )
+                        )
+                    }
+
+                    "fail" -> {
+                        Either.Left(PersistenceError.TechnicalError(forEntity.errorDescription ?: ""))
+                    }
+
+                    else -> {
+                        Either.Left(
+                            PersistenceError.AkamaiError(
+                                forEntity.error,
+                                forEntity.errorDescription
+                            )
+                        )
+                    }
                 }
             }
 
-            else -> Either.Left(PersistenceError.HttpError(forEntity.statusCode))
+            else -> {
+                Either.Left(PersistenceError.HttpError(response.statusCode))
+            }
         }
     }
 

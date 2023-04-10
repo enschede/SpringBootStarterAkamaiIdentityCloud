@@ -64,13 +64,12 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
         httpHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
         val timestamp = createTimestap(config)
         httpHeaders["Date"] = timestamp
-        httpHeaders["Authorization"] = calculateAkamaiSignature {
-            clientId = config.clientId
-            clientSecret = config.clientSecret
-            dateTime = timestamp
-            endpoint = ENDPOINT_ENTITY_UPDATE
-            params = treeMap
-        }
+        httpHeaders["Authorization"] =
+            calculateAkamaiSignature(config.clientId, config.clientSecret, timestamp, ENDPOINT_ENTITY_UPDATE) {
+                for ((key, value) in treeMap) {
+                    header(key, value)
+                }
+            }
 
         return Either.Right(AkamaiCreateDsl.HeaderParameterPair(map, httpHeaders))
     }

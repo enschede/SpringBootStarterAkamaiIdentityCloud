@@ -62,12 +62,10 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
         httpHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
         val timestamp = createTimestap(config)
         httpHeaders["Date"] = timestamp
-        httpHeaders["Authorization"] = calculateAkamaiSignature {
-            clientId = config.clientId
-            clientSecret = config.clientSecret
-            dateTime = timestamp
-            endpoint = ENDPOINT_ENTITY_CREATE
-            params = treeMap
+        httpHeaders["Authorization"] = calculateAkamaiSignature(config.clientId,config.clientSecret,timestamp,ENDPOINT_ENTITY_CREATE) {
+            for ((key, value) in treeMap) {
+                header(key, value)
+            }
         }
 
         return Either.Right(HeaderParameterPair(map, httpHeaders))
@@ -82,11 +80,11 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
         val headers = input.httpHeaders
 
         val request = HttpEntity(input.map, headers)
-        val s = config.restTemplate.postForEntity(config.createUri, request, String::class.java)
+        val response = config.restTemplate.postForEntity(config.createUri, request, String::class.java)
 
         return when {
-            s.statusCode.is2xxSuccessful -> {
-                val forEntity = config.singleElementDecoder.invoke(s.body!!)
+            response.statusCode.is2xxSuccessful -> {
+                val forEntity = config.singleElementDecoder.invoke(response.body!!)
 
                 when (forEntity.stat) {
                     "ok" -> Either.Right(forEntity.result!!)
@@ -116,7 +114,7 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
             }
 
             else -> {
-                Either.Left(HttpError(s.statusCode))
+                Either.Left(HttpError(response.statusCode))
             }
         }
     }

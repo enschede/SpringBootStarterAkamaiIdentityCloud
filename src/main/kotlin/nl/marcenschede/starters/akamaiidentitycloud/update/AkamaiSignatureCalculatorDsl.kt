@@ -10,35 +10,39 @@ import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-fun calculateAkamaiSignature(f: AkamaiSignatureCalculatorDsl.() -> Unit): String {
-    return AkamaiSignatureCalculatorDsl().apply(f).build()
+fun calculateAkamaiSignature(
+    clientId: String,
+    clientSecret: String,
+    dateTime: String,
+    endpoint: String, f: AkamaiSignatureCalculatorDsl.() -> Unit
+): String {
+    return AkamaiSignatureCalculatorDsl(clientId, clientSecret, dateTime, endpoint).apply(f).build()
 }
 
-class AkamaiSignatureCalculatorDsl {
-    lateinit var clientId: String
-    lateinit var clientSecret: String
-    lateinit var dateTime: String
-    lateinit var endpoint: String
-    lateinit var params: Map<String, String>
+class AkamaiSignatureCalculatorDsl(
+    val clientId: String,
+    val clientSecret: String,
+    dateTime: String,
+    endpoint: String
+) {
+
+    private var accumulatedString: String
+
+    init {
+        accumulatedString = buildString {
+            appendLine(endpoint)
+            appendLine(dateTime)
+        }
+    }
 
     fun build(): String {
         val HMAC_SHA1 = "HmacSHA1"
-        val toHash = buildString {
-            appendLine(endpoint)
-            appendLine(dateTime)
-
-            for ((key, value) in params) {
-                append(key)
-                append("=")
-                appendLine(value)
-            }
-        }
 
         return try {
             val sha1Hmac = Mac.getInstance(HMAC_SHA1)
             val keySpec = SecretKeySpec(clientSecret.toByteArray(StandardCharsets.UTF_8), HMAC_SHA1)
             sha1Hmac.init(keySpec)
-            val hashValue = sha1Hmac.doFinal(toHash.toByteArray(StandardCharsets.UTF_8))
+            val hashValue = sha1Hmac.doFinal(accumulatedString.toByteArray(StandardCharsets.UTF_8))
             val base64Hash = String(Base64.getEncoder().encode(hashValue), StandardCharsets.UTF_8)
             "Signature $clientId:$base64Hash"
         } catch (e: NoSuchAlgorithmException) {
@@ -46,7 +50,16 @@ class AkamaiSignatureCalculatorDsl {
         } catch (e: InvalidKeyException) {
             ""
         }
+    }
 
+    fun header(name: String, value: String) {
+        accumulatedString = buildString {
+            append(accumulatedString)
+
+            append(name)
+            append("=")
+            appendLine(value)
+        }
     }
 
 }
