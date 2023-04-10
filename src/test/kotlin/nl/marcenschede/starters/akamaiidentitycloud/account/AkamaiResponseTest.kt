@@ -1,4 +1,4 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update
+package nl.marcenschede.starters.akamaiidentitycloud.account
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -74,6 +74,7 @@ class AkamaiResponseTest {
         assertThat(response.stat).isEqualTo("ok")
         assertThat(response.error).isNull()
         assertThat(response.errorDescription).isNull()
+
         assertThat(response.result?.uuid).isEqualTo(UUID.fromString("7ba35d0a-f532-40cd-b91e-5c1452b59151"))
         assertThat(response.result?.created).isEqualTo(SEPT_16_2021)
         assertThat(response.result?.lastUpdated).isEqualTo(SEPT_16_2021)
@@ -82,7 +83,7 @@ class AkamaiResponseTest {
     @Test
     fun `when stat ok in extended account then the account is decoded`() {
 
-        val singleElementDecoder: ((String) -> SingleExtendedAccountResponse) = {
+        val singleElementDecoder: ((String) -> SingleAccountResponse) = {
             mapper.readValue(it, SingleExtendedAccountResponse::class.java)
         }
 
@@ -102,7 +103,7 @@ class AkamaiResponseTest {
                 }
             }
         """.trimIndent()
-        )
+        ) as SingleExtendedAccountResponse
 
         assertThat(response.stat).isEqualTo("ok")
         assertThat(response.error).isNull()
@@ -118,8 +119,8 @@ class AkamaiResponseTest {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class SingleExtendedAccountResponse(
-        val result: ExtendedAccount? = null,
-    ) : AkamaiResponse()
+        override val result: ExtendedAccount? = null,
+    ) : SingleAccountResponse()
 
 
     class ExtendedAccount(

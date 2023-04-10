@@ -3,6 +3,8 @@ package nl.marcenschede.starters.akamaiidentitycloud.update
 import arrow.core.Either
 import arrow.core.flatMap
 import com.fasterxml.jackson.core.JsonProcessingException
+import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.AkamaiResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_UPDATE
 import org.springframework.http.HttpEntity
@@ -11,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import java.time.OffsetDateTime
 import java.util.*
 
 fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Unit): Any {
@@ -71,18 +74,18 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
 
     private fun postRequest(
         input: AkamaiCreateDsl.HeaderParameterPair,
-    ): Either<UpdateError, AkamaiCreateDsl.CreateAccountResponse> {
+    ): Either<UpdateError, Account> {
 
         val headers = input.httpHeaders
 
         val request = HttpEntity(input.map, headers)
         println("postRequest::request = $request")
-        val forEntity = config.restTemplate.postForEntity(config.updateUri, request, AkamaiCreateDsl.CreateAccountResponse::class.java)
+        val forEntity = config.restTemplate.postForEntity(config.updateUri, request, AkamaiResponse::class.java)
 
         return when (forEntity.statusCodeValue) {
             200, 201, 202, 203, 204, 205, 206, 207, 208, 226 -> {
                 when (forEntity.body?.stat) {
-                    "ok" -> Either.Right(forEntity.body!!)
+                    "ok" -> Either.Right(Account("1", UUID.randomUUID(), OffsetDateTime.now(), OffsetDateTime.now()))
                     "error" -> {
                         println("postRequest::error::forEntity = ${forEntity}")
                         println("postRequest::error::forEntity.body.stat = ${forEntity.body?.stat}")

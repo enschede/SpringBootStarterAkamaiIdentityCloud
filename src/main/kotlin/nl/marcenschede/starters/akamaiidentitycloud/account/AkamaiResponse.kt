@@ -1,7 +1,8 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update
+package nl.marcenschede.starters.akamaiidentitycloud.account
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class AkamaiResponse {
@@ -14,6 +15,6 @@ open class AkamaiResponse {
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class SingleAccountResponse(
-    val result: Account? = null,
+open class SingleAccountResponse(
+    open val result: Account? = null,
 ) : AkamaiResponse()

@@ -1,13 +1,21 @@
 package nl.marcenschede.starters.akamaiidentitycloud.config
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
-import nl.marcenschede.starters.akamaiidentitycloud.update.SingleAccountResponse
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeDeserializer
+import nl.marcenschede.starters.akamaiidentitycloud.account.CustomAkamaiDateTimeSerializer
+import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.client.RestTemplate
 import java.time.Clock
+import java.time.OffsetDateTime
+import java.util.*
 
 class AkamaiIdentityCloudConfigDslTest {
 
@@ -106,16 +114,16 @@ class AkamaiIdentityCloudConfigDslTest {
 
     @Test
     fun `when restTemplate not set then default`() {
-        val config =    akamaiIdentityCloudConfig {
-                url = "https://nu.nl/"
-                clock = Clock.systemUTC()
-                clientId = "expectedClientId"
-                clientSecret = "expectedClientSecret"
-                objectMapper = ObjectMapper()
-                singleElementDecoder = {
-                    SingleAccountResponse(null)
-                }
+        val config = akamaiIdentityCloudConfig {
+            url = "https://nu.nl/"
+            clock = Clock.systemUTC()
+            clientId = "expectedClientId"
+            clientSecret = "expectedClientSecret"
+            objectMapper = ObjectMapper()
+            singleElementDecoder = {
+                SingleAccountResponse(null)
             }
+        }
 
         assertThat(config.restTemplate).isNotNull
     }
@@ -123,16 +131,16 @@ class AkamaiIdentityCloudConfigDslTest {
 
     @Test
     fun `when objectMapper not set then default`() {
-        val config =    akamaiIdentityCloudConfig {
-                url = "https://nu.nl/"
-                clock = Clock.systemUTC()
-                clientId = "expectedClientId"
-                clientSecret = "expectedClientSecret"
-                restTemplate = RestTemplate()
-                singleElementDecoder = {
-                    SingleAccountResponse(null)
-                }
+        val config = akamaiIdentityCloudConfig {
+            url = "https://nu.nl/"
+            clock = Clock.systemUTC()
+            clientId = "expectedClientId"
+            clientSecret = "expectedClientSecret"
+            restTemplate = RestTemplate()
+            singleElementDecoder = {
+                SingleAccountResponse(null)
             }
+        }
 
         assertThat(config.objectMapper).isNotNull
     }
@@ -194,5 +202,48 @@ class AkamaiIdentityCloudConfigDslTest {
         }
     }
 
+    @Test
+    fun `test type override`() {
+
+        val config = akamaiIdentityCloudConfig {
+            url = "http://nu.nl"
+            clock = Clock.systemUTC()
+            clientId = "expectedClientId"
+            clientSecret = "expectedClientSecret"
+//            restTemplate = expectedRestTemplate
+//            objectMapper = expectedObjectMapper
+            singleElementDecoder = {
+                objectMapper!!.readValue(it, SingleExtendedAccountResponse::class.java)
+            }
+
+        }
+
+        val singleExtendedAccountResponse = config.singleElementDecoder.invoke("") as SingleExtendedAccountResponse
+
+    }
+
+    class ExtendedAccount(
+        id: String,
+        uuid: UUID,
+        @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
+        @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
+        created: OffsetDateTime,
+        @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
+        @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
+        lastUpdated: OffsetDateTime,
+        var email: String? = null,
+        @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
+        @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
+        var emailVerified: OffsetDateTime? = null,
+        var mobileNumber: String? = null,
+        @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
+        @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
+        var mobileNumberVerified: OffsetDateTime? = null
+    ) : Account(id, uuid, created, lastUpdated)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class SingleExtendedAccountResponse(
+        override val result: ExtendedAccount? = null,
+    ) : SingleAccountResponse()
 
 }

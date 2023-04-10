@@ -2,11 +2,12 @@ package nl.marcenschede.starters.akamaiidentitycloud.update
 
 import arrow.core.Either
 import arrow.core.flatMap
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.*
+import com.fasterxml.jackson.core.JsonProcessingException
+import nl.marcenschede.starters.akamaiidentitycloud.account.Account
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_CREATE
+import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiUpdateDsl.UpdateError.HttpError
+import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiUpdateDsl.UpdateError.TechnicalError
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -17,14 +18,14 @@ import java.util.*
 fun createAccount(
     config: AkamaiIdentityCloudConfig,
     f: AkamaiCreateDsl.() -> Unit
-): Either<AkamaiUpdateDsl.UpdateError, AkamaiCreateDsl.CreateAccountResponse> {
+): Either<AkamaiUpdateDsl.UpdateError, Account> {
     return AkamaiCreateDsl(config).apply(f).execute()
 }
 
 class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
     val attributes = mutableMapOf<String, Any?>()
 
-    fun execute(): Either<AkamaiUpdateDsl.UpdateError, CreateAccountResponse> {
+    fun execute(): Either<AkamaiUpdateDsl.UpdateError, Account> {
         return createValues(attributes)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
@@ -35,7 +36,7 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
         return try {
             Either.Right(config.objectMapper.writeValueAsString(attributes))
         } catch (e: JsonProcessingException) {
-            Either.Left(AkamaiUpdateDsl.UpdateError.TechnicalError("Parsing json", e))
+            Either.Left(TechnicalError("Parsing json", e))
         }
     }
 
@@ -69,45 +70,45 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
             params = treeMap
         }
 
-        return Either.Right(HeaderParameterPair(map,httpHeaders))
+        return Either.Right(HeaderParameterPair(map, httpHeaders))
     }
 
     class HeaderParameterPair(val map: MultiValueMap<String, String>, val httpHeaders: HttpHeaders)
 
     private fun postRequest(
-      input:  HeaderParameterPair
-    ): Either<AkamaiUpdateDsl.UpdateError, CreateAccountResponse> {
+        input: HeaderParameterPair
+    ): Either<AkamaiUpdateDsl.UpdateError, Account> {
 
         val headers = input.httpHeaders
 
         val request = HttpEntity(input.map, headers)
-        println("postRequest::request = $request")
-        val forEntity = config.restTemplate.postForEntity(config.createUri, request, CreateAccountResponse::class.java)
+        val s = config.restTemplate.postForEntity(config.createUri, request, String::class.java)
 
-        return when (forEntity.statusCodeValue) {
-            200, 201, 202, 203, 204, 205, 206, 207, 208, 226 -> {
-                when (forEntity.body?.stat) {
-                    "ok" -> Either.Right(forEntity.body!!)
+        return when {
+            s.statusCode.is2xxSuccessful -> {
+                val forEntity = config.singleElementDecoder.invoke(s.body!!)
+
+                when (forEntity.stat) {
+                    "ok" -> Either.Right(forEntity.result!!)
+
                     "error" -> {
                         Either.Left(
                             AkamaiUpdateDsl.UpdateError.AkamaiError(
-                                forEntity.body?.error,
-                                forEntity.body?.errorDescription
+                                forEntity.error,
+                                forEntity.errorDescription
                             )
                         )
                     }
 
                     "fail" -> {
-                        println("postRequest::fail::forEntity.body = ${forEntity.body}")
-                        Either.Left(AkamaiUpdateDsl.UpdateError.TechnicalError(""))
+                        Either.Left(TechnicalError(forEntity.errorDescription ?: ""))
                     }
 
                     else -> {
-                        println("postRequest::else::forEntity.body = ${forEntity.body}")
                         Either.Left(
                             AkamaiUpdateDsl.UpdateError.AkamaiError(
-                                forEntity.body?.error,
-                                forEntity.body?.errorDescription
+                                forEntity.error,
+                                forEntity.errorDescription
                             )
                         )
                     }
@@ -115,23 +116,9 @@ class AkamaiCreateDsl(val config: AkamaiIdentityCloudConfig) {
             }
 
             else -> {
-                println("postRequest::else::forEntity.body = ${forEntity.body}")
-                Either.Left(AkamaiUpdateDsl.UpdateError.HttpError(forEntity.statusCode))
+                Either.Left(HttpError(s.statusCode))
             }
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    open class AkamaiResponse {
-        var stat: String? = null
-        var error: String? = null
-
-        @JsonProperty("error_description")
-        var errorDescription: String? = null
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class CreateAccountResponse(
-        val result: Account? = null,
-    ) : AkamaiGetDsl.AkamaiResponse()
 }

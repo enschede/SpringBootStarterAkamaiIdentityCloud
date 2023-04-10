@@ -1,4 +1,4 @@
-package nl.marcenschede.starters.akamaiidentitycloud.update
+package nl.marcenschede.starters.akamaiidentitycloud.account
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.core.JsonGenerator

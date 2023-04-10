@@ -1,8 +1,15 @@
 package nl.marcenschede.starters.akamaiidentitycloud.config
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import nl.marcenschede.starters.akamaiidentitycloud.update.AkamaiResponse
-import nl.marcenschede.starters.akamaiidentitycloud.update.SingleAccountResponse
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import nl.marcenschede.starters.akamaiidentitycloud.account.AkamaiResponse
+import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
 import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.util.StringUtils.hasText
 import org.springframework.web.client.RestTemplate
@@ -44,7 +51,16 @@ class AkamaiIdentityCloudConfigDsl {
 
         return AkamaiIdentityCloudConfig(
             url = url!!,
-            objectMapper = this.objectMapper ?: ObjectMapper(),
+            objectMapper = this.objectMapper ?: ObjectMapper().apply {
+                registerModule(kotlinModule())
+                registerModule(Jdk8Module())
+                registerModule(JavaTimeModule())
+                registerModule(ParameterNamesModule(JsonCreator.Mode.PROPERTIES))
+
+                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            },
             clock = clock ?: throw IllegalArgumentException("clock is mandatory"),
             clientId = if (hasText(clientId)) clientId!! else throw IllegalArgumentException("clientid is mandatory"),
             clientSecret = if (hasText(clientSecret)) clientSecret!! else  throw IllegalArgumentException("clientSecret is mandatory"),
