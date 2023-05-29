@@ -28,9 +28,7 @@ class CustomAkamaiDateTimeDeserializer : StdScalarDeserializer<OffsetDateTime>(O
 class CustomAkamaiDateTimeSerializer : StdScalarSerializer<OffsetDateTime>(OffsetDateTime::class.java) {
     override fun serialize(value: OffsetDateTime?, gen: JsonGenerator?, provider: SerializerProvider?) {
 
-        val s = isoOffsetDateTime.format(value)
-
-        gen?.writeString(s)
+        gen?.writeString(isoOffsetDateTime.format(value))
     }
 
 }
