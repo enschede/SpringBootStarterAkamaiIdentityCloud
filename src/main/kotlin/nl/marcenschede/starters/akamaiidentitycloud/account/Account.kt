@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.time.OffsetDateTime
 import java.util.*
 
-class ExtendedAccount(
+open class ExtendedAccount(
     id: String,
     uuid: UUID,
     @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
