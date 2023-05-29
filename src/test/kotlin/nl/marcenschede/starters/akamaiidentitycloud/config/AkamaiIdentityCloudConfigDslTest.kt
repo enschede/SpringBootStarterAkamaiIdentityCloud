@@ -31,10 +31,10 @@ class AkamaiIdentityCloudConfigDslTest {
             clientSecret = expectedClientSecret
             restTemplate = expectedRestTemplate
             objectMapper = expectedObjectMapper
-            singleElementDecoder = {
+            singleElementDecoder = { _, _ ->
                 SingleAccountResponse(null)
             }
-            this.multiElementDecoder = {
+            this.multiElementDecoder = { _, _ ->
                 MultiAccountResponse(null)
             }
         }
@@ -57,7 +57,7 @@ class AkamaiIdentityCloudConfigDslTest {
                 clientSecret = "expectedClientSecret"
                 restTemplate = RestTemplate()
                 objectMapper = ObjectMapper()
-                singleElementDecoder = {
+                singleElementDecoder = { _, _ ->
                     SingleAccountResponse(null)
                 }
             }
@@ -74,7 +74,7 @@ class AkamaiIdentityCloudConfigDslTest {
                 clientSecret = "expectedClientSecret"
                 restTemplate = RestTemplate()
                 objectMapper = ObjectMapper()
-                singleElementDecoder = {
+                singleElementDecoder = { _, _ ->
                     SingleAccountResponse(null)
                 }
             }
@@ -91,7 +91,7 @@ class AkamaiIdentityCloudConfigDslTest {
                 clientSecret = ""
                 restTemplate = RestTemplate()
                 objectMapper = ObjectMapper()
-                singleElementDecoder = {
+                singleElementDecoder = { _, _ ->
                     SingleAccountResponse(null)
                 }
             }
@@ -120,10 +120,10 @@ class AkamaiIdentityCloudConfigDslTest {
             clientId = "expectedClientId"
             clientSecret = "expectedClientSecret"
             objectMapper = ObjectMapper()
-            singleElementDecoder = {
+            singleElementDecoder = { _, _ ->
                 SingleAccountResponse(null)
             }
-            this.multiElementDecoder = {
+            this.multiElementDecoder = { _, _ ->
                 MultiAccountResponse(null)
             }
         }
@@ -140,10 +140,10 @@ class AkamaiIdentityCloudConfigDslTest {
             clientId = "expectedClientId"
             clientSecret = "expectedClientSecret"
             restTemplate = RestTemplate()
-            singleElementDecoder = {
+            singleElementDecoder = { _, _ ->
                 SingleAccountResponse(null)
             }
-            this.multiElementDecoder = {
+            this.multiElementDecoder = { _, _ ->
                 MultiAccountResponse(null)
             }
         }
@@ -164,7 +164,7 @@ class AkamaiIdentityCloudConfigDslTest {
                     clientSecret = "expectedClientSecret"
                     restTemplate = RestTemplate()
                     objectMapper = ObjectMapper()
-                    singleElementDecoder = {
+                    singleElementDecoder = { _, _ ->
                         SingleAccountResponse(null)
                     }
                 }
@@ -182,7 +182,7 @@ class AkamaiIdentityCloudConfigDslTest {
                     clientSecret = "expectedClientSecret"
                     restTemplate = RestTemplate()
                     objectMapper = ObjectMapper()
-                    singleElementDecoder = {
+                    singleElementDecoder = { _, _ ->
                         SingleAccountResponse(null)
                     }
                 }
@@ -200,7 +200,7 @@ class AkamaiIdentityCloudConfigDslTest {
                     clientSecret = "expectedClientSecret"
                     restTemplate = RestTemplate()
                     objectMapper = ObjectMapper()
-                    singleElementDecoder = {
+                    singleElementDecoder = { _, _ ->
                         SingleAccountResponse(null)
                     }
                 }
@@ -225,7 +225,7 @@ class AkamaiIdentityCloudConfigDslTest {
         @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
         @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
         var mobileNumberVerified: OffsetDateTime? = null
-    ) : Account(id, uuid, created, lastUpdated)
+    ) : BaseAccount(id, uuid, created, lastUpdated)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class SingleExtendedAccountResponse(

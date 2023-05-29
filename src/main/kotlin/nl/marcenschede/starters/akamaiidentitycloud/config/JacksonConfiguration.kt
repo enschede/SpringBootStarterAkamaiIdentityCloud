@@ -18,15 +18,21 @@ class JacksonConfiguration {
     @Bean
     @Qualifier("akamai_identity_cloud_objectmapper")
     fun objectMapper(): ObjectMapper {
-        return ObjectMapper().apply {
-            registerModule(kotlinModule())
-            registerModule(Jdk8Module())
-            registerModule(JavaTimeModule())
-            registerModule(ParameterNamesModule(JsonCreator.Mode.PROPERTIES))
+        return defaultObjectMapper()
+    }
 
-            setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    companion object {
+        fun defaultObjectMapper(): ObjectMapper {
+            return ObjectMapper().apply {
+                registerModule(kotlinModule())
+                registerModule(Jdk8Module())
+                registerModule(JavaTimeModule())
+                registerModule(ParameterNamesModule(JsonCreator.Mode.PROPERTIES))
+
+                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
     }
 }

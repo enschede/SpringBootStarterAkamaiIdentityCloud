@@ -1,7 +1,7 @@
 package nl.marcenschede.starters.akamaiidentitycloud.update
 
 import arrow.core.Either
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.BaseAccount
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -13,14 +13,14 @@ class SingleResponsePostRequest(val config: AkamaiIdentityCloudConfig) {
     fun postRequest(
         input: HeaderParameterPair,
         endpoint: String,
-    ): Either<PersistenceError, Account> {
+    ): Either<PersistenceError, BaseAccount> {
 
         val request = HttpEntity(input.map, input.httpHeaders)
         val response = config.restTemplate.postForEntity(URI(config.url + endpoint), request, String::class.java)
 
         return when {
             response.statusCode.is2xxSuccessful -> {
-                val forEntity = config.singleElementDecoder.invoke(response.body!!)
+                val forEntity = config.singleElementDecoder.invoke(config.objectMapper, response.body!!)
 
                 when (forEntity.stat) {
                     "ok" -> Either.Right(forEntity.result!!)

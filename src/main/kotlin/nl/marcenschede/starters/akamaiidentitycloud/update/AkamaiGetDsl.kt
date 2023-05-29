@@ -2,7 +2,7 @@ package nl.marcenschede.starters.akamaiidentitycloud.update
 
 import arrow.core.Either
 import arrow.core.flatMap
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.BaseAccount
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_GET
 import nl.marcenschede.starters.akamaiidentitycloud.update.SingleResponsePostRequest.HeaderParameterPair
@@ -12,7 +12,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.util.*
 
-fun getAccount(config: AkamaiIdentityCloudConfig, f: AkamaiGetDsl.() -> Unit): Either<PersistenceError, Account?> {
+fun getAccount(config: AkamaiIdentityCloudConfig, f: AkamaiGetDsl.() -> Unit): Either<PersistenceError, BaseAccount?> {
     return AkamaiGetDsl(config).apply(f).execute()
 }
 
@@ -20,7 +20,7 @@ class AkamaiGetDsl(val config: AkamaiIdentityCloudConfig) {
     val requestor = SingleResponsePostRequest(config)
     lateinit var uuid: String
 
-    fun execute(): Either<PersistenceError, Account?> {
+    fun execute(): Either<PersistenceError, BaseAccount?> {
         return createFindValues(uuid)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }

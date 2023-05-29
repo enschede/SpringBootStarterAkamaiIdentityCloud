@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.flatMap
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.BaseAccount
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_FIND
 import org.springframework.http.HttpEntity
@@ -17,14 +17,14 @@ import java.util.*
 fun findAccount(
     config: AkamaiIdentityCloudConfig,
     f: AkamaiFindDsl.() -> Unit
-): Either<PersistenceError, List<Account>?> {
+): Either<PersistenceError, List<BaseAccount>?> {
     return AkamaiFindDsl(config).apply(f).execute()
 }
 
 class AkamaiFindDsl(val config: AkamaiIdentityCloudConfig) {
     lateinit var filter: String
 
-    fun execute(): Either<PersistenceError, List<Account>?> {
+    fun execute(): Either<PersistenceError, List<BaseAccount>?> {
         return createFindValues(filter)
             .flatMap { createFormParams(it) }
             .flatMap { createHeaders(it) }
@@ -65,14 +65,14 @@ class AkamaiFindDsl(val config: AkamaiIdentityCloudConfig) {
 
     private fun postRequest(
         input: SingleResponsePostRequest.HeaderParameterPair,
-    ): Either<PersistenceError, List<Account>?> {
+    ): Either<PersistenceError, List<BaseAccount>?> {
 
         val request = HttpEntity(input.map, input.httpHeaders)
         val response = config.restTemplate.postForEntity(config.findUri, request, String::class.java)
 
         return when {
             response.statusCode.is2xxSuccessful -> {
-                val forEntity = config.multiElementDecoder.invoke(response.body!!)
+                val forEntity = config.multiElementDecoder.invoke(config.objectMapper, response.body!!)
 
                 when (forEntity.stat) {
                     "ok" -> Either.Right(forEntity.result!!)
@@ -118,7 +118,7 @@ class AkamaiFindDsl(val config: AkamaiIdentityCloudConfig) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class FindAccountsResponse(
-        val results: List<Account>? = null,
+        val results: List<BaseAccount>? = null,
         val result_count: Int? = null,
     ) : AkamaiResponse()
 

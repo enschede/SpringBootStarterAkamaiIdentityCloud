@@ -3,7 +3,7 @@ package nl.marcenschede.starters.akamaiidentitycloud.update
 import arrow.core.Either
 import arrow.core.flatMap
 import com.fasterxml.jackson.core.JsonProcessingException
-import nl.marcenschede.starters.akamaiidentitycloud.account.Account
+import nl.marcenschede.starters.akamaiidentitycloud.account.BaseAccount
 import nl.marcenschede.starters.akamaiidentitycloud.config.AkamaiIdentityCloudConfig
 import nl.marcenschede.starters.akamaiidentitycloud.config.ENDPOINT_ENTITY_UPDATE
 import nl.marcenschede.starters.akamaiidentitycloud.update.SingleResponsePostRequest.HeaderParameterPair
@@ -13,7 +13,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.util.*
 
-fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Unit): Either<PersistenceError, Account> {
+fun accountUpdate(config: AkamaiIdentityCloudConfig, f: AkamaiUpdateDsl.() -> Unit): Either<PersistenceError, BaseAccount> {
     return AkamaiUpdateDsl(config).apply(f).execute()
 }
 
@@ -23,7 +23,7 @@ class AkamaiUpdateDsl(private val config: AkamaiIdentityCloudConfig) {
     lateinit var uuid: UUID
     val attributes = mutableMapOf<String, Any?>()
 
-    fun execute(): Either<PersistenceError, Account> {
+    fun execute(): Either<PersistenceError, BaseAccount> {
 
         return createUpdateValues(attributes)
             .flatMap { createFormParams(it) }

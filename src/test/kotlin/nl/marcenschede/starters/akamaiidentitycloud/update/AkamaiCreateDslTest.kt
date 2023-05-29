@@ -1,8 +1,11 @@
 package nl.marcenschede.starters.akamaiidentitycloud.update
 
+import nl.marcenschede.starters.akamaiidentitycloud.account.ExtendedAccount
+import nl.marcenschede.starters.akamaiidentitycloud.account.MultiExtendedAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
-import nl.marcenschede.starters.akamaiidentitycloud.config.JacksonConfiguration
+import nl.marcenschede.starters.akamaiidentitycloud.account.SingleExtendedAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.config.akamaiIdentityCloudConfig
+import nl.marcenschede.starters.akamaiidentitycloud.fixedClockMay29
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -24,21 +27,20 @@ class AkamaiCreateDslTest {
 
         @Test
         fun `when base item is created then message is send to identity cloud`() {
-            val objectMapper = JacksonConfiguration().objectMapper()
             val restTemplate = RestTemplate()
             val mockServer = MockRestServiceServer.bindTo(restTemplate).build(SimpleRequestExpectationManager())
 
             val config = akamaiIdentityCloudConfig {
                 this.url = "http://localhost"
-                this.clock = Clock.systemUTC()
+                this.clock = fixedClockMay29
                 this.clientId = "id"
                 this.clientSecret = "secret"
                 this.restTemplate = restTemplate
-                this.singleElementDecoder = {
-                    objectMapper.readValue(it, SingleAccountResponse::class.java)
+                this.singleElementDecoder = { objectMapper, jsonString ->
+                    objectMapper.readValue(jsonString, SingleAccountResponse::class.java)
                 }
-                this.multiElementDecoder = {
-                    objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
+                this.multiElementDecoder = { objectMapper, jsonString ->
+                    objectMapper.readValue(jsonString, MultiExtendedAccountResponse::class.java)
                 }
             }
 
@@ -52,6 +54,7 @@ class AkamaiCreateDslTest {
                     )
                 )
                 .andExpect(MockRestRequestMatchers.method(HttpMethod.POST))
+                .andExpect(MockRestRequestMatchers.header("Authorization", "Signature id:zKFmE9T9561f0o6J6yYcPBXQc10="))
                 .andRespond(
                     MockRestResponseCreators.withSuccess().body(
                         """
@@ -88,7 +91,6 @@ class AkamaiCreateDslTest {
 
         @Test
         fun `when extended item is created then message is send to identity cloud`() {
-            val objectMapper = JacksonConfiguration().objectMapper()
             val restTemplate = RestTemplate()
             val mockServer = MockRestServiceServer.bindTo(restTemplate).build(SimpleRequestExpectationManager())
 
@@ -98,11 +100,11 @@ class AkamaiCreateDslTest {
                 this.clientId = "id"
                 this.clientSecret = "secret"
                 this.restTemplate = restTemplate
-                this.singleElementDecoder = {
-                    objectMapper.readValue(it, SingleExtendedAccountResponse::class.java)
+                this.singleElementDecoder = { objectMapper, jsonString ->
+                    objectMapper.readValue(jsonString, SingleExtendedAccountResponse::class.java)
                 }
-                this.multiElementDecoder = {
-                    objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
+                this.multiElementDecoder = { objectMapper, jsonString ->
+                    objectMapper.readValue(jsonString, MultiExtendedAccountResponse::class.java)
                 }
             }
 

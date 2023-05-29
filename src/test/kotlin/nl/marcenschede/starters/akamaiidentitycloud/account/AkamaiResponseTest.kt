@@ -64,8 +64,8 @@ class AkamaiResponseTest {
                 "result": {
                     "id": "12345",
                     "uuid": "7ba35d0a-f532-40cd-b91e-5c1452b59151",
-                    "created": "2020-09-16 00:00+02:00",
-                    "lastUpdated": "2020-09-16 00:00+02:00"
+                    "created": "2020-09-16 00:00:00+02:00",
+                    "lastUpdated": "2020-09-16 00:00:00+02:00"
                 }
             }
         """.trimIndent()
@@ -94,12 +94,12 @@ class AkamaiResponseTest {
                 "result": {
                     "id": "12345",
                     "uuid": "7ba35d0a-f532-40cd-b91e-5c1452b59151",
-                    "created": "2020-09-16 00:00+02:00",
-                    "lastUpdated": "2020-09-16 00:00+02:00",
+                    "created": "2020-09-16 00:00:00+02:00",
+                    "lastUpdated": "2020-09-16 00:00:00+02:00",
                     "email": "marc@marc.com",
-                    "emailVerified": "2020-09-16 00:00+02:00",
+                    "emailVerified": "2020-09-16 00:00:00+02:00",
                     "mobileNumber": "+3161234527",
-                    "mobileNumberVerified": "2020-09-16 00:00+02:00"
+                    "mobileNumberVerified": "2020-09-16 00:00:00+02:00"
                 }
             }
         """.trimIndent()
@@ -140,6 +140,6 @@ class AkamaiResponseTest {
         @JsonDeserialize(using = CustomAkamaiDateTimeDeserializer::class)
         @JsonSerialize(using = CustomAkamaiDateTimeSerializer::class)
         var mobileNumberVerified: OffsetDateTime? = null
-    ) : Account(id, uuid, created, lastUpdated)
+    ) : BaseAccount(id, uuid, created, lastUpdated)
 
 }

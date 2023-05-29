@@ -33,11 +33,11 @@ class AkamaiIdentityCloudStarterAutoConfiguration {
             this.clientId = clientId
             this.clientSecret = clientSecret
             this.restTemplate = restTemplate
-            this.singleElementDecoder = {
-                objectMapper.readValue(it, SingleAccountResponse::class.java)
+            this.singleElementDecoder = { objectMapper: ObjectMapper, jsonString: String ->
+                objectMapper.readValue(jsonString, SingleAccountResponse::class.java)
             }
-            this.multiElementDecoder = {
-                objectMapper.readValue(it, MultiAccountResponse::class.java)
+            this.multiElementDecoder = {objectMapper, jsonString ->
+                objectMapper.readValue(jsonString, MultiAccountResponse::class.java)
             }
         }
     }

@@ -11,16 +11,15 @@ open class AkamaiResponse {
 
     @JsonProperty("error_description")
     var errorDescription: String? = null
-
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class SingleAccountResponse(
-    open val result: Account? = null,
+    open val result: BaseAccount? = null,
 ) : AkamaiResponse()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class MultiAccountResponse(
-    open val result: List<Account>? = null,
+    open val result: List<BaseAccount>? = null,
 ) : AkamaiResponse()
 

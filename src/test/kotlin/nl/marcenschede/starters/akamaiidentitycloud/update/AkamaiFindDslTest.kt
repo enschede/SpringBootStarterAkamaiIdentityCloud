@@ -1,8 +1,9 @@
 package nl.marcenschede.starters.akamaiidentitycloud.update
 
+import nl.marcenschede.starters.akamaiidentitycloud.account.MultiExtendedAccountResponse
 import nl.marcenschede.starters.akamaiidentitycloud.account.SingleAccountResponse
-import nl.marcenschede.starters.akamaiidentitycloud.config.JacksonConfiguration
 import nl.marcenschede.starters.akamaiidentitycloud.config.akamaiIdentityCloudConfig
+import nl.marcenschede.starters.akamaiidentitycloud.fixedClockMay29
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
@@ -12,7 +13,6 @@ import org.springframework.test.web.client.SimpleRequestExpectationManager
 import org.springframework.test.web.client.match.MockRestRequestMatchers
 import org.springframework.test.web.client.response.MockRestResponseCreators
 import org.springframework.web.client.RestTemplate
-import java.time.Clock
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -20,21 +20,20 @@ class AkamaiFindDslTest {
 
     @Test
     fun `when extended item is updated then message is send to identity cloud`() {
-        val objectMapper = JacksonConfiguration().objectMapper()
         val restTemplate = RestTemplate()
         val mockServer = MockRestServiceServer.bindTo(restTemplate).build(SimpleRequestExpectationManager())
 
         val config = akamaiIdentityCloudConfig {
             this.url = "http://localhost"
-            this.clock = Clock.systemUTC()
+            this.clock = fixedClockMay29
             this.clientId = "id"
             this.clientSecret = "secret"
             this.restTemplate = restTemplate
-            this.singleElementDecoder = {
-                objectMapper.readValue(it, SingleAccountResponse::class.java)
+            this.singleElementDecoder = { objectMapper, jsonString ->
+                objectMapper.readValue(jsonString, SingleAccountResponse::class.java)
             }
-            this.multiElementDecoder = {
-                objectMapper.readValue(it, MultiExtendedAccountResponse::class.java)
+            this.multiElementDecoder = { objectMapper, jsonString ->
+                objectMapper.readValue(jsonString, MultiExtendedAccountResponse::class.java)
             }
         }
 
@@ -48,6 +47,7 @@ class AkamaiFindDslTest {
                 )
             )
             .andExpect(MockRestRequestMatchers.method(HttpMethod.POST))
+            .andExpect(MockRestRequestMatchers.header("Authorization", "Signature id:DuvwBhp28ipLU9NQJL0djmLxrVc="))
             .andRespond(
                 MockRestResponseCreators.withSuccess().body(
                     """
